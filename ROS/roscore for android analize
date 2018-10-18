@@ -1,0 +1,89 @@
+rosjava(android_core)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+newMasterButtonClicked     //创建新的public master
+------------------------------------------------------------------------	
+	setResult(RESULT_OK, createNewMasterIntent(true, false));   //跳转
+    finish();
+    --------------------------------------------------------------------
+		createNewMasterIntent      //获取intent用于跳转
+		----------------------------------------------------------------
+		Intent intent = new Intent();
+		final String uri = uriText.getText().toString();       //默认<string name="master_uri_hint">http://localhost:11311/</string>
+		intent.putExtra("ROS_MASTER_CREATE_NEW", newMaster);
+		intent.putExtra("ROS_MASTER_PRIVATE", isPrivate);
+		intent.putExtra("ROS_MASTER_URI", uri);
+		intent.putExtra("ROS_MASTER_NETWORK_INTERFACE", selectedInterface);
+		return intent
+		--------rosactivity.java:onActivityResult-----------------------
+			onActivityResultCallback.execute(requestCode, resultCode, data);
+			----------------------------------------------------------------
+				if (data.getBooleanExtra("ROS_MASTER_CREATE_NEW", false)) {
+					nodeMainExecutorService.startMaster(data.getBooleanExtra("ROS_MASTER_PRIVATE", true));
+				}
+				
+				//init ros
+				new AsyncTask<Void, Void, Void>() {
+					@Override
+					protected Void doInBackground(Void... params) {
+					  RosActivity.this.init(nodeMainExecutorService);
+					  return null;
+					}
+				}.execute();
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+talker: android_tutorial_pubsub MainActivity.java init
+------------------------------------------------------------------------
+protected void init(NodeMainExecutor nodeMainExecutor)
+	talker = new Talker();
+			------------------------------------------------------------
+			public Talker() {
+				this.topic_name = "chatter";
+			}
+			------------------------------------------------------------
+	NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname());
+    nodeConfiguration.setMasterUri(getMasterUri());
+    nodeMainExecutor.execute(talker, nodeConfiguration);
+    // The RosTextView is also a NodeMain that must be executed in order to
+    // start displaying incoming messages.
+    nodeMainExecutor.execute(rosTextView, nodeConfiguration);
+    
+    init是在创建了Master之后执行如下代码后调用的, 在RosActivity.java中
+    //init ros
+	new AsyncTask<Void, Void, Void>() {
+		@Override
+		protected Void doInBackground(Void... params) {
+		  RosActivity.this.init(nodeMainExecutorService);   //public class NodeMainExecutorService extends Service implements NodeMainExecutor
+		  return null;
+		}
+	}.execute();
+	--------------------------------------------------------------------
+		public void onServiceConnected(ComponentName name, IBinder binder) {
+			nodeMainExecutorService = ((NodeMainExecutorService.LocalBinder) binder).getService();
+			
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+connect to master: MasterChooser.java okButtonClicked
+	--------------------------------------------------------------------
+	程序在click事件中起了一个AsyncTask， 在doInBackground中执行了uri的解析
+	protected Boolean doInBackground(Void... params) {
+        try {
+          MasterClient masterClient = new MasterClient(new URI(uri));
+          masterClient.getUri(GraphName.of("android/master_chooser_activity"));
+          toast("Connected!");
+          return true;
+	随后在onPostExecute中获取返回值，进行跳转
+	if (result) {
+          //Update Recent Master URI
+          addRecentMasterURI(uri);
+          // If the displayed URI is valid then pack that into the intent.
+          // Package the intent to be consumed by the calling activity.
+          Intent intent = createNewMasterIntent(false, true);
+          setResult(RESULT_OK, intent);
+          finish();
+    }
+    这里就跳转到和上面一样的界面了
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	
