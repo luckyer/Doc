@@ -1,0 +1,96 @@
+1. JNI开发
+在chatter_jni.cpp中，实现了OnLoad方法，直接返回JNI_VERSION_1_6
+```
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+    log("Library has been loaded");
+    // Return the JNI version
+    return JNI_VERSION_1_6;
+}
+```
+
+2. JNI接口
+chatter_jni.cpp中，接口有两个，其中一个Java_org_ros_rosjava_1tutorial_1native_1node_ChatterNativeNode_execute，从函数可以获得的信息，
+	package org.ros.rosjava_tutorial_native_node (函数中的1表示是和前面连在一起的，不是长串的包名)
+	class ChatterNativeNode
+所以必然对应有一个文件为rog.ros.rosjava_tutorial_native_node.ChatterNativeNode.java
+
+3. 教程中JNI依赖了一个.h文件，是通过如下的指令生成的
+	javah -o chatter_jni.h -classpath ~/android1/src/androidpkg1/androidp1/build/intermediates/classes/debug:~/rosjava/src/rosjava_core/rosjava/build/classes/main/ org.ros.rosjava_tutorial_native_node.ChatterNativeNode org.ros.node.NativeNodeMain
+	
+	来看下chatter_jni.h中到底有什么东西
+	a.首先，包含了<jni.h>
+	b.其次，就是对cpp文件中的函数进行了申明：
+		JNIEXPORT jint JNICALL Java_org_ros_rosjava_1tutorial_1native_1node_ChatterNativeNode_shutdown(JNIEnv *, jobject);
+	c.还定义了一个宏，暂时不知道作用，可以依葫芦画瓢
+		#ifndef _Included_org_ros_rosjava_tutorial_native_node_ChatterNativeNode
+		#define _Included_org_ros_rosjava_tutorial_native_node_ChatterNativeNode
+		#endif
+4. java调用
+	在ChatterNativeNode.java中，有如下的代码
+		public class ChatterNativeNode extends NativeNodeMain {
+		  private static final String libName = "chatter_jni";
+		  public static final String nodeName = "chatter";
+
+		  public ChatterNativeNode() {
+			super(libName);
+		  }
+		  ......
+		}
+	从代码看，应该就是调用了NativeNodeMain的构造函数加载了lib
+5. Android.mk编写
+	LOCAL_PATH := $(call my-dir)
+
+	include $(CLEAR_VARS)
+	LOCAL_MODULE    := chatter_jni
+	LOCAL_SRC_FILES := src/chatter_jni.cpp
+	LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+	LOCAL_LDLIBS := -landroid -llog
+	LOCAL_STATIC_LIBRARIES := roscpp_android_ndk
+	include $(BUILD_SHARED_LIBRARY)
+
+	$(call import-add-path, /opt/roscpp_output)
+	$(call import-module, roscpp_android_ndk)
+
+	在mk中调用了roscpp_android_ndk，为代码提供了可执行库； 如果到时候库不够可以继续去/ros/roscpp_output/roscpp_android_ndk中修改CMakeList.txt增加库
+	
+6. 尝试编写自己的jni文件
+	1) 编写jni文件
+		jni文件放在和chatter_jni.cpp同级的目录即可
+		简要修改下chatter_jni.cpp， 将接口变更下，顺带变更下jni文件名称即可
+			JNIEXPORT jint JNICALL Java_org_ros_rosjava_1tutorial_1native_1node_TalkerNativeNode_execute
+				ros::Publisher chatter_pub = n.advertise<std_msgs::String>("talker", 1000);
+	2) 在mk文件中增加编译
+		include $(CLEAR_VARS)
+		LOCAL_MODULE    := talker_jni
+		LOCAL_SRC_FILES := src/talker_jni.cpp
+		LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+		LOCAL_LDLIBS := -landroid -llog
+		LOCAL_STATIC_LIBRARIES := roscpp_android_ndk
+		include $(BUILD_SHARED_LIBRARY)
+	3) 增加talker_jni.h，复制下chatter_jni.h，将其中的chatter改为talker即可
+	4) 创建TalkerNativeNode.java
+		根据ChatterNativeNode.java简单修改即可
+		  public class TalkerNativeNode extends NativeNodeMain {
+			  private static final String libName = "talker_jni";
+			  public static final String nodeName = "talker";
+
+			  public TalkerNativeNode() {
+				super(libName);
+			  }
+			  ......
+		  }
+	5) 最后在Androidp1.java中调用
+		NodeConfiguration nodeConfiguration1 = NodeConfiguration.newPublic(hostName);     
+        nodeConfiguration1.setMasterUri(masterUri);
+        nodeConfiguration1.setNodeName(TalkerNativeNode.nodeName);
+        
+        talkerNativeNode = new TalkerNativeNode();
+        nodeMainExecutor.execute(talkerNativeNode, nodeConfiguration1); 
+    6) 打印信息
+		zhang@zhang-Lenovo-XiaoXin-I2000:~/Documents/Doc$ rostopic echo /talker 
+		data: hello world 416
+		---
+		data: hello world 417
+		---
+		data: hello world 418
+
