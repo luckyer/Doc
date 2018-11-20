@@ -52,6 +52,7 @@ chatter_jni.cpp中，接口有两个，其中一个Java_org_ros_rosjava_1tutoria
 	$(call import-module, roscpp_android_ndk)
 
 	在mk中调用了roscpp_android_ndk，为代码提供了可执行库； 如果到时候库不够可以继续去/ros/roscpp_output/roscpp_android_ndk中修改CMakeList.txt增加库
+	需要注意的是，需要将对应的支持库拷贝到/opt/roscpp_output下面
 	
 6. 尝试编写自己的jni文件
 	1) 编写jni文件

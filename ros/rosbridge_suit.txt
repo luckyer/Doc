@@ -1,0 +1,17 @@
+wiki address: http://wiki.ros.org/rosbridge_suite
+
+1. 本地使用、启动rosbridge_suite
+	mkdir -p catkin_indigo/src
+	catkin_make
+	cd catkin_indigo/src
+	git clone https://github.com/RobotWebTools/rosbridge_suite.git
+	cd ../
+	catkin_make
+	source devel/setup.bash
+	roslaunch rosbridge_server rosbridge_websocket.launch
+
+2.连接rosbridge_suite
+	http://www.blue-zero.com/WebSocket/  在地址栏中输入ws://localhost:9090连接到本地websocket
+	
+3.rosbridge 协议介绍
+	https://github.com/RobotWebTools/rosbridge_suite/blob/develop/ROSBRIDGE_PROTOCOL.md
