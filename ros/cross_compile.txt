@@ -1,0 +1,70 @@
+环境安装：
+	sudo apt-get install gcc-arm-linux-androideabi
+ARM官方网站获取lib文件：
+	https://archlinuxarm.org/packages
+
+1. 交叉编译libz
+	a.下载libz
+		https://zlib.net/
+	b. 配置libz
+		export CC=arm-linux-androideabi-gcc
+		./configure --prefix=/home/zhang/arm/libz --static
+	c. make & make install
+2. 编译libpng
+	a. 下载libpn源码
+		http://www.libpng.org/pub/png/libpng.html
+	b. 配置libpng
+		export CC=arm-linux-androideabi-gcc
+		export CFLAGS="-I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include"
+		export LDFLAGS="-L/usr/arm-linux-androideabi/lib -L/home/zhang/arm/libz/lib"
+		./configure --prefix=/home/zhang/arm/software/linpng --enable-static --host=arm-linux --with-zlib-prefix=/home/zhang/arm/libz
+	c. 修改Makefile
+		- DEFAULT_INCLUDES = -I.
+		+ DEFAULT_INCLUDES = -I. -I/home/zhang/arm/libz/include
+	d. make & make install
+3. 编译libiconv
+	a. 下载源码
+		http://www.gnu.org/software/libiconv/#downloading
+	b. 配置libiconv (这个直接沿用之前配置好的就行了)
+		export CC=arm-linux-androideabi-gcc
+		export CFLAGS="-I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include"
+		export LDFLAGS="-L/usr/arm-linux-androideabi/lib -L/home/zhang/arm/libz/lib"
+	c. make & make install
+4. 编译libSDL
+	a. 下载libSDL源码
+		http://www.libsdl.org/download-1.2.php
+	b. 配置libSDL
+		export CFLAGS="-I/usr/arm-linux-androideabi/include -I/home/zhang/Downloads/libpulse-12.2-2-arm.pkg/usr/include"
+		export LDFLAGS="-L/usr/arm-linux-androideabi/lib -L/home/zhang/Downloads/libpulse-12.2-2-arm.pkg/usr/lib"
+		export CC=arm-linux-androideabi-gcc
+		在编译lisSDL的时候依赖了libpulse，所以需要先去ARM官网下载libpulse
+		./configure --prefix=/home/zhang/arm/software/libsdl --disable-video-nanox -disable-video-qtopia --enable-static --enable-shared --disable-video-photon --disable-video-ggi --disable-video-svga --disable-video-aalib --disable-video-dummy --disable-video-dga --disable-arts --disable-esd --disable-alsa --disable-video-x11 --disable-nasm --disable-joystick --disable-input-tslib -enable-video-fbcon --host=arm-linux --enable-loadso --disable-cdrom
+	c. make & make install
+6. 编译libSDL_image
+	a. 下载libSDL_image源码
+		http://www.libsdl.org/projects/SDL_image/
+	b. 配置libSDL_image
+		export CC=arm-linux-androideabi-gcc
+		export CFLAGS="-I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include -I/home/zhang/arm/software/libpng/include"
+		export LDFLAGS="-L/usr/arm-linux-androideabi/lib -L/home/zhang/arm/libz/lib -L/home/zhang/arm/software/libpng/lib"
+		./configure --prefix=/home/zhang/arm/software/sdl_image --host=arm-linux --enable-static --disable-webp
+	c. 修改Makefile
+		- CFLAGS = -I/usr/include/libpng12   -I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include -I/home/zhang/arm/software/libpng/include -I/home/zhang/arm/software/sdl_arm/include -I/home/zhang/arm/software/libiconv/include -D_GNU_SOURCE=1 -D_REENTRANT -I/usr/include/SDL  
+		+ CFLAGS = -I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include -I/home/zhang/arm/software/libpng/include -I/home/zhang/arm/software/sdl_arm/include -I/home/zhang/arm/software/libiconv/include -D_GNU_SOURCE=1 -D_REENTRANT
+		
+		- LIBPNG_CFLAGS = -I/usr/include/libpng12
+		+ LIBPNG_CFLAGS = -I/home/zhang/arm/software/libpng/include  
+		
+		- LIBPNG_LIBS = -lpng12 
+		+ LIBPNG_LIBS = -lpng16
+		
+		- OBJCFLAGS = -I/usr/include/libpng12   -I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include -I/home/zhang/arm/software/libpng/include -I/home/zhang/arm/software/sdl_arm/include -I/home/zhang/arm/software/libiconv/include -D_GNU_SOURCE=1 -D_REENTRANT -I/usr/include/SDL  
+		+ OBJCFLAGS = -I/usr/arm-linux-androideabi/include -I/home/zhang/arm/libz/include -I/home/zhang/arm/software/libpng/include -I/home/zhang/arm/software/sdl_arm/include -I/home/zhang/arm/software/libiconv/include -D_GNU_SOURCE=1 -D_REENTRANT
+		
+		- SDL_CFLAGS = -D_GNU_SOURCE=1 -D_REENTRANT -I/usr/include/SDL 
+		+ SDL_CFLAGS = -D_GNU_SOURCE=1 -D_REENTRANT -I/home/zhang/arm/software/sdl_arm/include
+		
+		- oldincludedir = /usr/include
+		+ oldincludedir = /usr/arm-linux-androideabi/include
+
+		

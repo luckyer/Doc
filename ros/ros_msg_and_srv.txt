@@ -1,0 +1,13 @@
+1. 在ros中，自定义消息的时候很常见，以robooster为例,在robooster中使用了如下自定义消息
+	```
+	# request message
+	bool start_stop
+	---
+	# response message
+	int32 result
+	```
+srv文件在编译后会生成一个.h文件，在robooster中就包含了这样一个.h文件
+	```
+	#include <robooster/CtrlAutoSrv.h>
+	```
+因为在Android中使用的时候无法使用srv文件，因此.h文件的生成机制就显得至关重要了
