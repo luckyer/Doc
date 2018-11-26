@@ -1,0 +1,3 @@
+1. 包含目录下的所有文件，如java文件
+	LOCAL_SRC_FILES := $(call all-subdir-java-files)
+		all-subdir-java-files定义于build/core/definitions.mk , 初次之外还有all-subdir-cpp-files等
