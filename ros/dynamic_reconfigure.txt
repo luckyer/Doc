@@ -1,0 +1,37 @@
+在move_base中使用了dynamic_reconfigure， 导致在Android上使用的时候出现了缺少参数的情况
+
+1. 问题描述
+	move_base.cpp line 240 
+		/home/zhang/android1/src/androidpkg1/androidp1/src/main/jni/src/move_base/src/move_base.cpp:240:36: error: no member named 'max_planning_retries' in 'move_base::MoveBaseConfig'
+			max_planning_retries_ = config.max_planning_retries;
+2. 代码分析
+	void MoveBase::reconfigureCB(move_base::MoveBaseConfig &config, uint32_t level){
+    boost::recursive_mutex::scoped_lock l(configuration_mutex_);
+    从reconfigureCB看，config是函数的入参，函数的调用发生在
+    dsrv_ = new dynamic_reconfigure::Server<move_base::MoveBaseConfig>(ros::NodeHandle("~"));
+    //boost::bind的使用 https://www.cnblogs.com/milanleon/p/7491180.html
+    dynamic_reconfigure::Server<move_base::MoveBaseConfig>::CallbackType cb = boost::bind(&MoveBase::reconfigureCB, this, _1, _2);
+    dsrv_->setCallback(cb);
+    
+    #move_base.h
+		#include <dynamic_reconfigure/server.h>
+		dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;
+		
+		void setCallback(const CallbackType &callback)
+		{
+			boost::recursive_mutex::scoped_lock lock(mutex_);
+			callback_ = callback;
+			callCallback(config_, ~0); // At startup we need to load the configuration with all level bits set. (Everything has changed.)
+			updateConfigInternal(config_);
+		}
+		
+		最初的赋值是在如下的语句中就执行了，里面的程序会调用到init()
+		dynamic_reconfigure::Server<move_base::MoveBaseConfig>::CallbackType cb = boost::bind(&MoveBase::reconfigureCB, this, _1, _2);
+		
+		在init中有如下的代码
+		ConfigType init_config = ConfigType::__getDefault__();
+		init_config.__fromServer__(node_handle_);
+		init_config.__clamp__();
+		updateConfigInternal(init_config);
+		
+		init_config = ConfigType::__getDefault__();

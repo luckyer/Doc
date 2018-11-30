@@ -1,3 +1,7 @@
 1. 包含目录下的所有文件，如java文件
 	LOCAL_SRC_FILES := $(call all-subdir-java-files)
 		all-subdir-java-files定义于build/core/definitions.mk , 初次之外还有all-subdir-cpp-files等
+		
+2. 在使用include $(call all-makefiles-under,$(LOCAL_PATH))的时候，如果用来编译的Android.mk在下下一级目录里面，那么需要在下一级目录中加入一个Android.mk文件，内容如下即可
+	LOCAL_PATH := $(call my-dir)
+	include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -1,0 +1,14 @@
+打印"heartbeat"的具体位置， 该函数为服务调用到的函数
+bool WisebotBridge::heartbeatSrv(wisebot_bridge::HeartbeatSrv::Request &req,
+		  wisebot_bridge::HeartbeatSrv::Response &res)
+{ 
+	res.result = 0;
+	count_heart = 0;
+	ROS_INFO("heartbeat");
+	return true;	
+}
+
+注册服务的地方如下
+srv_heartbeat_  = nh_private_.advertiseService("heartbeat", &WisebotBridge::heartbeatSrv, this);
+
+
